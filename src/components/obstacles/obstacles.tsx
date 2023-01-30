@@ -21,6 +21,7 @@ export const Obstacles: React.FC<IObstacleProps> = ({ count }) => {
         zDistance: 22,
         yDistance: { min: 2, max: 15, value: [3.75, 6.5] },
         obstacleHeight: 50,
+        initialZDistance: 30,
     });
 
     const [cameraPosition, setCameraPosition] = useState(0);
