@@ -8,7 +8,7 @@ import { StartBlock } from '../start-block';
 
 export interface ILevelProps {};
 
-const obstaclesCount = 1000;
+const obstaclesCount = 4;
 
 export const Level: React.FC<ILevelProps> = () => {
     const { debug } = useControls('physics', { debug: true });

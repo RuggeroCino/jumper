@@ -1,11 +1,11 @@
-import { useKeyboardControls } from '@react-three/drei';
+import { useGLTF, useKeyboardControls } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody } from '@react-three/rapier';
 import { RigidBodyApi } from '@react-three/rapier/dist/declarations/src/types';
 import { useControls } from 'leva';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Vector3 } from 'three';
-import { boxGeometry, cameraSettings, KeyboardControl, playerMaterial } from '../../constants';
+import { Euler, Quaternion, Vector3 } from 'three';
+import { cameraSettings, KeyboardControl } from '../../constants';
 import { useGameStore } from '../../stores';
 import { GameState } from '../../stores/game-store';
 
@@ -13,6 +13,7 @@ export interface IPlayerProps {};
 
 export const Player: React.FC<IPlayerProps> = () => {
     const playerRef = useRef<RigidBodyApi>(null);
+    const flooz = useGLTF('/assets/models/flooz.glb');
 
     const jumpPressed = useKeyboardControls<KeyboardControl>(state => state.JUMP);
 
@@ -25,7 +26,7 @@ export const Player: React.FC<IPlayerProps> = () => {
         jumpForce: 13,
         linearDamping: 0.1,
         angularDamping: 0.1,
-        speed: 1,
+        speed: 1.1,
         godMode: true,
     })
 
@@ -91,6 +92,8 @@ export const Player: React.FC<IPlayerProps> = () => {
             playerRef.current?.setLinvel({ x: 0, y: 0, z: 0 });
             playerRef.current?.setAngvel({ x: 0, y: 0, z: 0 });
             playerRef.current?.setTranslation({ x: 0, y: 0, z: 0 });
+            playerRef.current?.setRotation(new Quaternion().setFromEuler(new Euler(0, 0, 0)));
+
         }
     }, [gameState])
 
@@ -103,9 +106,12 @@ export const Player: React.FC<IPlayerProps> = () => {
             linearDamping={linearDamping}
             angularDamping={angularDamping}
             position={[0, 0, 0]}
+            rotation={[0, 0, 0]}
+            mass={0.3}
             onCollisionEnter={handleCollision}
+            scale={0.6}
         >
-            <mesh geometry={boxGeometry} material={playerMaterial} />
+            <primitive object={flooz.scene} />
         </RigidBody>
     );
 };
