@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { InstancedMesh, RepeatWrapping, Texture, Vector2, Vector3 } from 'three';
 import { boxGeometry, planeGeometry } from '../../constants';
 import { obstacleMaterial, sensorMaterial } from '../../constants/materials';
-import { useGameStore } from '../../stores';
+import { GameState, useGameStore } from '../../stores';
 import { obstaclesUtils } from './obstacles-utils';
 
 export interface IObstacleProps {
@@ -20,7 +20,7 @@ export const Obstacles: React.FC<IObstacleProps> = ({ count }) => {
     const { zDistance, yDistance, obstacleHeight } = useControls('obstacles', {
         zDistance: 22,
         yDistance: { min: 2, max: 15, value: [3.75, 6.5] },
-        obstacleHeight: 50,
+        obstacleHeight: 30,
         initialZDistance: 30,
     });
 
@@ -45,13 +45,14 @@ export const Obstacles: React.FC<IObstacleProps> = ({ count }) => {
         obstacleMaterial.roughnessMap = parsedTextures[6];
 
         parsedTextures.forEach((texture) => {
-            texture.repeat = new Vector2(1, 10);
+            texture.repeat = new Vector2(1, 6);
             texture.wrapS = RepeatWrapping;
             texture.wrapT = RepeatWrapping;
         })
     })
 
     const increaseScore = useGameStore(state => state.increaseScore);
+    const gameState = useGameStore((state) => state.state);
 
     const handleIncreaseScore = () => {
         if (INCREASE_TIMEOUT === true) {
@@ -74,32 +75,8 @@ export const Obstacles: React.FC<IObstacleProps> = ({ count }) => {
     const instanceRigidSensorRef = useRef<InstancedRigidBodyApi>(null);
 
     const obstacleTransforms = useMemo(() => {
-        const positions: Vector3Array[] = [];
         const scales: Vector3Array[] = Array(count * 2).fill([5, obstacleHeight, 5]);
-
-        for(let index = 0; index < count; index++) {
-            const upperObstacleY = obstaclesUtils.generateUpperYPosition();
-
-            const upperObstaclePosition = obstaclesUtils.getObstaclePosition({
-                upperObstacleY,
-                obstacleHeight,
-                isUpperObstacle: true,
-                yDistance,
-                zDistance,
-                position: index
-            });
-
-            const lowerObstaclePosition = obstaclesUtils.getObstaclePosition({
-                upperObstacleY,
-                obstacleHeight,
-                isUpperObstacle: false,
-                yDistance,
-                zDistance,
-                position: index
-            });
-
-            positions.push(upperObstaclePosition.toArray(), lowerObstaclePosition.toArray());
-        }
+        const positions = obstaclesUtils.generateObstaclePositions({ count, obstacleHeight, yDistance, zDistance });
 
         return { positions, scales };
     }, [count, yDistance, zDistance, obstacleHeight]);
@@ -143,6 +120,21 @@ export const Obstacles: React.FC<IObstacleProps> = ({ count }) => {
             }
         })
     }, [cameraPosition, yDistance, obstacleHeight, zDistance, count])
+
+    // Reset and regenerate obstacle and sensor positions on game ended
+    useEffect(() => {
+        if (gameState === GameState.ENDED) {
+            instanceRigidSensorRef.current?.forEach((sensor, index) => {
+                sensor.setTranslation({ x: 0, y: 0, z: (index + 1) * -zDistance });
+            })
+
+            const newPositions = obstaclesUtils.generateObstaclePositions({ count, obstacleHeight, yDistance, zDistance });
+            instanceRigidObstacleRef.current?.forEach((obstacle, index) => {
+                const [x, y, z] = newPositions[index];
+                obstacle.setTranslation({ x, y, z});
+            });
+        }
+    }, [gameState, count, obstacleHeight, yDistance, zDistance]);
 
     useFrame((state) => {
         if (!DEBOUNCE_CAMERA) {

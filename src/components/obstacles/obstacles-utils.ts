@@ -1,3 +1,4 @@
+import { Vector3Array } from "@react-three/rapier";
 import { Vector3 } from "three";
 
 export interface IGetObstaclePositionParams {
@@ -27,6 +28,13 @@ export interface IGetObstaclePositionParams {
     position: number;
 }
 
+export interface IGenerateObstaclePositionsParams extends Omit<IGetObstaclePositionParams, 'upperObstacleY' | 'isUpperObstacle' | 'position'> {
+    /**
+     * Number of obstacles to generate.
+     */
+    count: number;
+}
+
 class ObstaclesUtils {
     getObstaclePosition = (params: IGetObstaclePositionParams): Vector3 => {
         const { upperObstacleY, obstacleHeight, isUpperObstacle, yDistance, zDistance, position } = params;
@@ -39,7 +47,35 @@ class ObstaclesUtils {
         return new Vector3(0, randomYPosition, (position + 1) * - zDistance);
     }
 
-    generateUpperYPosition = () => (Math.random() * 10) + 22;
+    generateUpperYPosition = () => (Math.random() * 10) + 12;
+
+    generateObstaclePositions = (params: IGenerateObstaclePositionsParams): Vector3Array[] => {
+        const { count, ...positionParams } = params;
+
+        const positions: Vector3Array[] = [];
+
+        for (let index = 0; index < count; index++) {
+            const upperObstacleY = obstaclesUtils.generateUpperYPosition();
+
+            const upperObstaclePosition = obstaclesUtils.getObstaclePosition({
+                isUpperObstacle: true,
+                upperObstacleY,
+                position: index,
+                ...positionParams,
+            });
+
+            const lowerObstaclePosition = obstaclesUtils.getObstaclePosition({
+                isUpperObstacle: false,
+                upperObstacleY,
+                position: index,
+                ...positionParams,
+            });
+
+            positions.push(upperObstaclePosition.toArray(), lowerObstaclePosition.toArray());
+        }
+
+        return positions;
+    }
 }
 
 export const obstaclesUtils = new ObstaclesUtils();

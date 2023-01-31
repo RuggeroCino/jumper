@@ -30,7 +30,7 @@ export const Player: React.FC<IPlayerProps> = () => {
         angularDamping: 0.1,
         speed: 1.1,
         godMode: true,
-        disableTorque: true,
+        disableTorque: false,
     })
 
     const jump = useCallback(() => {
