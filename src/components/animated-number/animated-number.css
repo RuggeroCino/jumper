@@ -1,0 +1,16 @@
+.animated-number {
+  display: inline;
+  overflow: hidden;
+  line-height: 0.95em;
+}
+
+.animated-number__container {
+  display: inline-flex;
+  align-items: flex-end;
+  overflow-y: hidden;
+  height: 1em;
+}
+
+.animated-number__container-number {
+  height: 1em;
+}

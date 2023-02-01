@@ -20,7 +20,7 @@ export const Obstacles: React.FC<IObstacleProps> = ({ count }) => {
     const { zDistance, yDistance, obstacleHeight } = useControls('obstacles', {
         zDistance: 22,
         yDistance: { min: 2, max: 15, value: [3.75, 6.5] },
-        obstacleHeight: 30,
+        obstacleHeight: 20,
         initialZDistance: 30,
     });
 
@@ -45,7 +45,7 @@ export const Obstacles: React.FC<IObstacleProps> = ({ count }) => {
         obstacleMaterial.roughnessMap = parsedTextures[6];
 
         parsedTextures.forEach((texture) => {
-            texture.repeat = new Vector2(1, 6);
+            texture.repeat = new Vector2(1, 4);
             texture.wrapS = RepeatWrapping;
             texture.wrapT = RepeatWrapping;
         })

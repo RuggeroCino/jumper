@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import React from 'react';
-import { GameState, useGameStore } from '../../stores';
+import { useGameStore } from '../../stores';
+import { AnimatedNumber } from '../animated-number';
 import './interface.css';
 
 export interface IInterfaceProps {
@@ -11,21 +12,11 @@ export interface IInterfaceProps {
 };
 
 export const Interface: React.FC<IInterfaceProps> = ({ className }) => {
-    const gameState = useGameStore((state) => state.state);
     const gameScore = useGameStore((state) => state.score);
-    const restartGame = useGameStore((state) => state.restartGame);
-
-    const handleRestart = () => {
-        restartGame();
-    };
 
     return (
         <div className={classNames('interface', className)}>
-            <p>{gameState}</p>
-            <p>Score: {gameScore}</p>
-            {gameState === GameState.ENDED && (
-                <button onClick={handleRestart}>Restart</button>
-            )}
+            <AnimatedNumber className="interface__score"  number={gameScore} />
         </div>
     );
 };

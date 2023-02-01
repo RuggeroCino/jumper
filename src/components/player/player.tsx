@@ -3,8 +3,8 @@ import { useFrame } from '@react-three/fiber';
 import { RigidBody } from '@react-three/rapier';
 import { RigidBodyApi } from '@react-three/rapier/dist/declarations/src/types';
 import { useControls } from 'leva';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Euler, Quaternion, Vector3 } from 'three';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { Euler, PointLight, Quaternion, Vector3 } from 'three';
 import { KeyboardControl, playerSettings } from '../../constants';
 import { useGameStore } from '../../stores';
 import { GameState } from '../../stores/game-store';
@@ -13,11 +13,11 @@ export interface IPlayerProps {};
 
 export const Player: React.FC<IPlayerProps> = () => {
     const playerRef = useRef<RigidBodyApi>(null);
+    const playerLightRef = useRef<PointLight>(null);
+
     const flooz = useGLTF('/assets/models/flooz.glb');
 
     const jumpPressed = useKeyboardControls<KeyboardControl>(state => state.JUMP);
-
-    const [isReady, setIsReady] = useState(false);
 
     const gameState = useGameStore((state) => state.state);
     const startGame = useGameStore((state) => state.startGame);
@@ -29,9 +29,15 @@ export const Player: React.FC<IPlayerProps> = () => {
         linearDamping: 0.1,
         angularDamping: 0.1,
         speed: 1.1,
-        godMode: true,
+        godMode: false,
         disableTorque: false,
-    })
+    });
+
+    const { lightPositionDelta, lightIntensity, lightDistance } = useControls('player-light', {
+        lightPositionDelta: { x: 5, y: 2, z: 4 },
+        lightIntensity: 1.1,
+        lightDistance: 40,
+    });
 
     const jump = useCallback(() => {
         const position = playerRef.current?.translation();
@@ -59,7 +65,13 @@ export const Player: React.FC<IPlayerProps> = () => {
         state.camera.position.z = playerPosition.z;
         state.camera.lookAt(new Vector3(0, 0, playerPosition.z));
 
-        if (playerPosition.y > 10 || playerPosition.y < -10) {
+        if (playerLightRef.current) {
+            playerLightRef.current.position.z = playerPosition.z + lightPositionDelta.z;
+            playerLightRef.current.position.y = playerPosition.y + lightPositionDelta.y;
+            playerLightRef.current.position.x = playerPosition.x + lightPositionDelta.x;
+        }
+
+        if (playerPosition.y > 15 || playerPosition.y < -15) {
             endGame()
         }
     })
@@ -95,30 +107,24 @@ export const Player: React.FC<IPlayerProps> = () => {
         }
     }, [gameState])
 
-    // Quick fix for intial physics issues
-    useEffect(() => {
-        setTimeout(() => setIsReady(true), 500)
-    }, [])
-
-    if (!isReady) {
-        return null;
-    }
-
     return (
-        <RigidBody
-            type="dynamic"
-            ref={playerRef}
-            restitution={0}
-            friction={0}
-            linearDamping={linearDamping}
-            angularDamping={angularDamping}
-            position={[0, 0, 10]}
-            rotation={[0, 0, 0]}
-            mass={0.3}
-            onCollisionEnter={handleCollision}
-            scale={0.6}
-        >
-            <primitive object={flooz.scene} />
-        </RigidBody>
+        <>
+            <RigidBody
+                type="dynamic"
+                ref={playerRef}
+                restitution={0}
+                friction={0}
+                linearDamping={linearDamping}
+                angularDamping={angularDamping}
+                position={[playerSettings.initialPosition.x, playerSettings.initialPosition.y, playerSettings.initialPosition.z]}
+                rotation={[0, 0, 0]}
+                mass={0.3}
+                onCollisionEnter={handleCollision}
+                scale={0.6}
+            >
+                <primitive object={flooz.scene} />
+            </RigidBody>
+            <pointLight ref={playerLightRef} position={[0, 0, 0]} intensity={lightIntensity} distance={lightDistance} />
+        </>
     );
 };

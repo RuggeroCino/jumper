@@ -11,7 +11,7 @@ export interface ILevelProps {};
 const obstaclesCount = 4;
 
 export const Level: React.FC<ILevelProps> = () => {
-    const { debug } = useControls('physics', { debug: true });
+    const { debug } = useControls('physics', { debug: false });
 
     return (
         <Physics timeStep="vary" gravity={[0, -18, 0]}>

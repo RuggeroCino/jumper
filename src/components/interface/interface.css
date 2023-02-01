@@ -9,5 +9,8 @@
   justify-content: center;
   z-index: 1;
   color: white;
-  gap: 8px;
+}
+
+.interface__score {
+  font-size: 64px;
 }

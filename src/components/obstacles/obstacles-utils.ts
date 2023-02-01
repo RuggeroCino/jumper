@@ -47,7 +47,7 @@ class ObstaclesUtils {
         return new Vector3(0, randomYPosition, (position + 1) * - zDistance);
     }
 
-    generateUpperYPosition = () => (Math.random() * 10) + 12;
+    generateUpperYPosition = () => (Math.random() * 15) + 5;
 
     generateObstaclePositions = (params: IGenerateObstaclePositionsParams): Vector3Array[] => {
         const { count, ...positionParams } = params;
