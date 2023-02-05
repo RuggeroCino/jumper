@@ -1,11 +1,11 @@
-import { useGLTF, useKeyboardControls } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody } from '@react-three/rapier';
 import { RigidBodyApi } from '@react-three/rapier/dist/declarations/src/types';
 import { useControls } from 'leva';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Euler, PointLight, Quaternion, Vector3 } from 'three';
-import { KeyboardControl, playerSettings } from '../../constants';
+import { playerSettings } from '../../constants';
 import { useGameStore } from '../../stores';
 import { GameState } from '../../stores/game-store';
 
@@ -16,8 +16,6 @@ export const Player: React.FC<IPlayerProps> = () => {
     const playerLightRef = useRef<PointLight>(null);
 
     const flooz = useGLTF('/assets/models/flooz.glb');
-
-    const jumpPressed = useKeyboardControls<KeyboardControl>(state => state.JUMP);
 
     const gameState = useGameStore((state) => state.state);
     const startGame = useGameStore((state) => state.startGame);
@@ -52,6 +50,17 @@ export const Player: React.FC<IPlayerProps> = () => {
         }
     }, [jumpForce, disableTorque])
 
+    const handleJumpPressed = useCallback(() => {
+        if (gameState === GameState.ENDED) {
+            restartGame();
+        } else if (gameState === GameState.READY) {
+            startGame();
+            playerRef.current?.addForce({ x: 0, y: 0, z: speed * -1 });
+        }
+
+        jump();
+    }, [gameState, restartGame, startGame, jump, speed]);
+
     const handleCollision = useCallback(() => {
         if (gameState === GameState.PLAYING && !godMode) {
             endGame();
@@ -77,25 +86,6 @@ export const Player: React.FC<IPlayerProps> = () => {
     })
 
     useEffect(() => {
-        if (jumpPressed) {
-            jump();
-        }
-    }, [jumpPressed, jump])
-
-    useEffect(() => {
-        if (jumpPressed && gameState === GameState.ENDED) {
-            restartGame();
-        }
-    }, [jumpPressed, gameState, restartGame, startGame]);
-
-    useEffect(() => {
-        if (gameState === GameState.READY && jumpPressed) {
-            startGame();
-            playerRef.current?.addForce({ x: 0, y: 0, z: speed * -1 });
-        }
-    }, [jumpPressed, gameState, speed, startGame])
-
-    useEffect(() => {
         if (gameState === GameState.ENDED) {
             playerRef.current?.resetForces();
             playerRef.current?.resetTorques();
@@ -106,6 +96,18 @@ export const Player: React.FC<IPlayerProps> = () => {
 
         }
     }, [gameState])
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => event.code === 'Space' ? handleJumpPressed() : undefined;
+
+        window.addEventListener('keydown', handleKeyDown, { passive: true });
+        window.addEventListener('touchstart', handleJumpPressed, { passive: true });
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('touchstart', handleJumpPressed);
+        }
+    }, [handleJumpPressed])
 
     return (
         <>
