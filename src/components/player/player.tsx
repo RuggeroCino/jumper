@@ -4,7 +4,7 @@ import { RigidBody } from '@react-three/rapier';
 import { RigidBodyApi } from '@react-three/rapier/dist/declarations/src/types';
 import { useControls } from 'leva';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Euler, PointLight, Quaternion, Vector3 } from 'three';
+import { Euler, Quaternion, Vector3 } from 'three';
 import { playerSettings } from '../../constants';
 import { useGameStore } from '../../stores';
 import { GameState } from '../../stores/game-store';
@@ -13,7 +13,6 @@ export interface IPlayerProps {};
 
 export const Player: React.FC<IPlayerProps> = () => {
     const playerRef = useRef<RigidBodyApi>(null);
-    const playerLightRef = useRef<PointLight>(null);
 
     const flooz = useGLTF('/assets/models/flooz.glb');
 
@@ -29,12 +28,6 @@ export const Player: React.FC<IPlayerProps> = () => {
         speed: 1.1,
         godMode: false,
         disableTorque: false,
-    });
-
-    const { lightPositionDelta, lightIntensity, lightDistance } = useControls('player-light', {
-        lightPositionDelta: { x: 5, y: 2, z: 4 },
-        lightIntensity: 1.1,
-        lightDistance: 40,
     });
 
     const jump = useCallback(() => {
@@ -74,12 +67,6 @@ export const Player: React.FC<IPlayerProps> = () => {
         state.camera.position.z = playerPosition.z;
         state.camera.lookAt(new Vector3(0, 0, playerPosition.z));
 
-        if (playerLightRef.current) {
-            playerLightRef.current.position.z = playerPosition.z + lightPositionDelta.z;
-            playerLightRef.current.position.y = playerPosition.y + lightPositionDelta.y;
-            playerLightRef.current.position.x = playerPosition.x + lightPositionDelta.x;
-        }
-
         if (playerPosition.y > 15 || playerPosition.y < -15) {
             endGame()
         }
@@ -91,9 +78,8 @@ export const Player: React.FC<IPlayerProps> = () => {
             playerRef.current?.resetTorques();
             playerRef.current?.setLinvel({ x: 0, y: 0, z: 0 });
             playerRef.current?.setAngvel({ x: 0, y: 0, z: 0 });
-            playerRef.current?.setTranslation({ x: 0, y: 0, z: 10 });
+            playerRef.current?.setTranslation({ x: playerSettings.initialPosition.x, y: playerSettings.initialPosition.y, z: playerSettings.initialPosition.z });
             playerRef.current?.setRotation(new Quaternion().setFromEuler(new Euler(0, 0, 0)));
-
         }
     }, [gameState])
 
@@ -126,7 +112,6 @@ export const Player: React.FC<IPlayerProps> = () => {
             >
                 <primitive object={flooz.scene} />
             </RigidBody>
-            <pointLight ref={playerLightRef} position={[0, 0, 0]} intensity={lightIntensity} distance={lightDistance} />
         </>
     );
 };
