@@ -48,4 +48,4 @@ To learn React, check out the [React documentation](https://reactjs.org/).
 ## Attribution
 
 - Sci-fi panel texture: https://3dtextures.me/2022/03/04/sci-fi-metal-panel-004/
-- Ethereum model: https://sketchfab.com/3d-models/ethereum-ac40cebf61464c548776a0c20b47ccc7
+- Shader: https://www.shadertoy.com/view/3t3GDB

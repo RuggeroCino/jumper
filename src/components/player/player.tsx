@@ -1,11 +1,10 @@
-import { useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody } from '@react-three/rapier';
 import { RigidBodyApi } from '@react-three/rapier/dist/declarations/src/types';
 import { useControls } from 'leva';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Euler, PointLight, Quaternion, Vector3 } from 'three';
-import { playerSettings } from '../../constants';
+import { cameraSettings, playerSettings, boxGeometry, playerMaterial } from '../../constants';
 import { useGameStore } from '../../stores';
 import { GameState } from '../../stores/game-store';
 
@@ -13,10 +12,7 @@ export interface IPlayerProps {};
 
 export const Player: React.FC<IPlayerProps> = () => {
     const playerRef = useRef<RigidBodyApi>(null);
-
     const playerLightRef = useRef<PointLight>(null);
-
-    const playerModel = useGLTF('/assets/models/ethereum.glb');
 
     const gameState = useGameStore((state) => state.state);
     const startGame = useGameStore((state) => state.startGame);
@@ -24,20 +20,24 @@ export const Player: React.FC<IPlayerProps> = () => {
     const endGame = useGameStore((state) => state.endGame);
 
     const { jumpForce, linearDamping, angularDamping, speed, godMode, disableTorque } = useControls('player', {
-        jumpForce: 12,
+        jumpForce: 4,
         linearDamping: 0.1,
         angularDamping: 0.1,
-        speed: 1.1,
+        speed: 0.4,
         godMode: false,
         disableTorque: false,
     });
 
     const { lightPositionDelta, lightIntensity, lightDistance, lightColor } = useControls('player-light', {
         lightPositionDelta: { x: 5, y: 1, z: 0 },
-        lightIntensity: 1.1,
+        lightIntensity: 0.5,
         lightDistance: 40,
-        lightColor: '#f6ffd7',
+        lightColor: '#8ab4f8',
     });
+
+    const [smoothedCameraPosition] = useState(cameraSettings.initialPosition.clone());
+    const [smoothedCameraTarget] = useState(playerSettings.initialPosition.clone());
+    const [smoothedLightTarget] = useState(playerSettings.initialPosition.clone().add(new Vector3(lightPositionDelta.x, lightPositionDelta.y, lightPositionDelta.z)));
 
     const jump = useCallback(() => {
         const position = playerRef.current?.translation();
@@ -48,7 +48,7 @@ export const Player: React.FC<IPlayerProps> = () => {
         playerRef.current?.applyImpulse({ x: 0, y: jumpForce, z: initialZForce });
 
         if (!disableTorque) {
-            playerRef.current?.applyTorqueImpulse({ x: 0, y: jumpForce * -0.0025, z: 0 });
+            playerRef.current?.applyTorqueImpulse({ x: jumpForce * -0.002, y: 0, z: 0 });
         }
     }, [jumpForce, disableTorque])
 
@@ -69,20 +69,22 @@ export const Player: React.FC<IPlayerProps> = () => {
         }
     }, [endGame, gameState, godMode])
 
-    useFrame((state) => {
+    useFrame((state, delta) => {
         const playerPosition = playerRef.current?.translation() ?? playerSettings.initialPosition;
 
-        console.log(playerPosition.z)
+        const newCameraPosition = state.camera.position.clone();
+        newCameraPosition.z = playerPosition.z;
 
-        // Follow player while playing
-        state.camera.position.z = playerPosition.z;
-        state.camera.lookAt(new Vector3(0, 0, playerPosition.z));
+        const newCameraTarget = new Vector3(0, 0, playerPosition.z);
+        const newLightPosition = playerPosition.clone().add(new Vector3(lightPositionDelta.x, lightPositionDelta.y, lightPositionDelta.z));
 
-        if (playerLightRef.current) {
-            playerLightRef.current.position.z = playerPosition.z + lightPositionDelta.z;
-            playerLightRef.current.position.y = playerPosition.y + lightPositionDelta.y;
-            playerLightRef.current.position.x = playerPosition.x + lightPositionDelta.x;
-        }
+        smoothedCameraPosition.lerp(newCameraPosition, 5 * delta)
+        smoothedCameraTarget.lerp(newCameraTarget, 5 * delta);
+        smoothedLightTarget.lerp(newLightPosition, 5 * delta);
+
+        state.camera.position.copy(smoothedCameraPosition);
+        state.camera.lookAt(newCameraTarget);
+        playerLightRef.current?.position.copy(smoothedLightTarget);
 
         if (playerPosition.y > 15 || playerPosition.y < -15) {
             endGame()
@@ -95,7 +97,7 @@ export const Player: React.FC<IPlayerProps> = () => {
             playerRef.current?.resetTorques();
             playerRef.current?.setLinvel({ x: 0, y: 0, z: 0 });
             playerRef.current?.setAngvel({ x: 0, y: 0, z: 0 });
-            playerRef.current?.setTranslation({ x: playerSettings.initialPosition.x, y: playerSettings.initialPosition.y, z: playerSettings.initialPosition.z });
+            playerRef.current?.setTranslation(playerSettings.initialPosition);
             playerRef.current?.setRotation(new Quaternion().setFromEuler(new Euler(0, Math.PI / 2, 0)));
         }
     }, [gameState])
@@ -122,12 +124,12 @@ export const Player: React.FC<IPlayerProps> = () => {
                 linearDamping={linearDamping}
                 angularDamping={angularDamping}
                 position={[playerSettings.initialPosition.x, playerSettings.initialPosition.y, playerSettings.initialPosition.z]}
-                rotation={[0, Math.PI / 2, 0]}
+                rotation={[0, 0, 0]}
                 mass={0.3}
                 onCollisionEnter={handleCollision}
-                scale={[0.35, 0.35, 1]}
+                scale={1.3}
             >
-                <primitive object={playerModel.scene} />
+                <mesh geometry={boxGeometry} material={playerMaterial}/>
             </RigidBody>
             <pointLight ref={playerLightRef} position={[0, 0, 0]} intensity={lightIntensity} distance={lightDistance} color={lightColor} />
         </>

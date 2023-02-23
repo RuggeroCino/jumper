@@ -1,6 +1,7 @@
 import { Debug, Physics } from '@react-three/rapier';
 import { useControls } from 'leva';
 import React from 'react';
+import { Background } from '../background';
 import { Lights } from '../lights';
 import { Obstacles } from '../obstacles';
 import { Player } from '../player';
@@ -19,6 +20,7 @@ export const Level: React.FC<ILevelProps> = () => {
             <Player />
             <StartBlock />
             <Lights />
+            <Background />
             <Obstacles count={obstaclesCount} />
         </Physics>
     );
