@@ -14,7 +14,7 @@ export const Application: React.FC<IApplicationProps> = () => {
     const { performanceEnabled, orbitControls, backgroundColor } = useControls('generic', {
         performanceEnabled: false,
         orbitControls: true,
-        backgroundColor: '#1c1d1d',
+        backgroundColor: '#001224',
     });
 
     const displayDebug = window.location.href.includes('#debug');
