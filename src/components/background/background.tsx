@@ -9,7 +9,7 @@ export const Background: React.FC<IBackgroundProps> = () => {
     const shaderRef = useRef<ShaderMaterial>(null);
 
     const uniforms = useMemo(
-        () => ({ uResolution: { value: new Vector2(window.innerHeight, window.innerWidth), }, uTime: { value: 0.0 }, uBattery: { value: 1 } }),
+        () => ({ uResolution: { value: new Vector2(window.innerHeight, window.innerWidth), }, uTime: { value: 0.0 } }),
         []
     );
 
