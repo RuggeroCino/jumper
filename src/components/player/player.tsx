@@ -82,8 +82,14 @@ export const Player: React.FC<IPlayerProps> = () => {
         smoothedCameraTarget.lerp(newCameraTarget, 5 * delta);
         smoothedLightTarget.lerp(newLightPosition, 5 * delta);
 
-        state.camera.position.copy(smoothedCameraPosition);
-        state.camera.lookAt(newCameraTarget);
+        if (gameState !== GameState.ENDED) {
+            state.camera.position.copy(smoothedCameraPosition);
+            state.camera.lookAt(smoothedCameraTarget);
+        } else {
+            state.camera.position.copy(newCameraPosition);
+            state.camera.lookAt(newCameraTarget);
+        }
+
         playerLightRef.current?.position.copy(smoothedLightTarget);
 
         if (playerPosition.y > 15 || playerPosition.y < -15) {
